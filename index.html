@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0c1424" />
+    <title>Space Raiders</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="hud">
+      <div class="hud__left">
+        <span id="level">Level: 1</span>
+        <span id="score">Score: 0</span>
+        <span id="credits">Credits: 3</span>
+      </div>
+      <div class="hud__right">
+        <span id="health">Health: 500</span>
+      </div>
+    </div>
+    <div id="start-screen" class="start-screen">
+      <div class="start-card">
+        <h1>Space Raiders</h1>
+        <p>Arrow keys to move. Space to fire.</p>
+        <button id="play" type="button">Play</button>
+      </div>
+    </div>
+    <button id="respawn" class="respawn" type="button" hidden>Respawn</button>
+    <canvas id="game" width="960" height="640" aria-label="Space Raiders"></canvas>
+    <div class="hint">Arrow keys to move. Space to fire.</div>
+    <script src="game.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js");
+        });
+      }
+    </script>
+  </body>
+</html>
