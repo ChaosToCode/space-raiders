@@ -1,28 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Space+Grotesk:wght@400;600&display=swap");
+
 * {
   box-sizing: border-box;
 }
 
 :root {
   color-scheme: dark;
+  --bg-deep: #02040a;
+  --bg-panel: #0b1220;
+  --bg-panel-strong: #0f1830;
+  --ink: #e7f0ff;
+  --ink-muted: rgba(231, 240, 255, 0.7);
+  --accent: #7dd8ff;
+  --accent-strong: #45b6ff;
+  --gold: #ffb347;
+  --danger: #ff6a6a;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
   margin: 0;
-  background: #02040a;
-  color: #d7e3ff;
-  font-family: "Courier New", Courier, monospace;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(75, 120, 255, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(255, 179, 71, 0.12), transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(78, 225, 255, 0.16), transparent 50%),
+    var(--bg-deep);
+  color: var(--ink);
+  font-family: "Space Grotesk", sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   min-height: 100vh;
-  padding: 16px;
+  padding: 10px;
+  touch-action: manipulation;
 }
 
 canvas {
-  border: 2px solid #2b3a55;
+  border: 1px solid rgba(125, 216, 255, 0.35);
   background: #000;
-  box-shadow: 0 0 25px rgba(56, 120, 220, 0.2);
+  box-shadow: 0 30px 60px rgba(2, 6, 20, 0.65), 0 0 30px rgba(69, 182, 255, 0.15);
+  width: min(960px, 96vw);
+  height: auto;
+  max-height: 70vh;
+  display: block;
+  border-radius: 14px;
+  image-rendering: pixelated;
 }
 
 .hud {
@@ -33,6 +60,9 @@ canvas {
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: "Orbitron", sans-serif;
 }
 
 .hud__left,
@@ -44,16 +74,89 @@ canvas {
 .hint {
   font-size: 12px;
   opacity: 0.7;
+  font-family: "Orbitron", sans-serif;
+}
+
+.controls {
+  width: min(960px, 96vw);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  body {
+    gap: 8px;
+    padding: 6px;
+  }
+
+  canvas {
+    max-height: 55vh;
+  }
+
+  .controls {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn {
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  .btn--fire {
+    min-width: 120px;
+    min-height: 60px;
+  }
+}
+
+.controls__move {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.controls__row {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  min-width: 54px;
+  min-height: 54px;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 216, 255, 0.4);
+  background: #0c1424;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: "Orbitron", sans-serif;
+  font-size: 16px;
+  box-shadow: 0 0 16px rgba(80, 140, 255, 0.25);
+  touch-action: none;
+}
+
+.btn:active {
+  background: #15203a;
+}
+
+.btn--fire {
+  min-width: 90px;
+  min-height: 70px;
+  font-weight: bold;
 }
 
 .respawn {
   padding: 10px 20px;
-  border: 1px solid #2b3a55;
+  border: 1px solid rgba(125, 216, 255, 0.4);
   background: #0c1424;
-  color: #e8f0ff;
+  color: var(--ink);
   text-transform: uppercase;
   letter-spacing: 2px;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Orbitron", sans-serif;
   cursor: pointer;
   box-shadow: 0 0 20px rgba(80, 140, 255, 0.25);
 }
@@ -77,11 +180,12 @@ canvas {
 }
 
 .start-card {
-  border: 1px solid #2b3a55;
+  border: 1px solid rgba(125, 216, 255, 0.35);
   padding: 24px 32px;
-  background: #0b1220;
+  background: var(--bg-panel);
   text-align: center;
   box-shadow: 0 0 30px rgba(80, 140, 255, 0.25);
+  border-radius: 16px;
 }
 
 .start-card h1 {
@@ -89,6 +193,7 @@ canvas {
   font-size: 28px;
   letter-spacing: 2px;
   text-transform: uppercase;
+  font-family: "Orbitron", sans-serif;
 }
 
 .start-card p {
@@ -97,17 +202,167 @@ canvas {
   opacity: 0.8;
 }
 
+.enemy-list {
+  margin: 0 0 16px;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.enemy-list p {
+  margin: 0 0 6px;
+}
+
 #play {
   padding: 10px 22px;
-  border: 1px solid #2b3a55;
+  border: 1px solid rgba(125, 216, 255, 0.5);
   background: #101a2f;
-  color: #e8f0ff;
+  color: var(--ink);
   text-transform: uppercase;
   letter-spacing: 2px;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Orbitron", sans-serif;
   cursor: pointer;
 }
 
 #play:hover {
   background: #1a2744;
+}
+
+.shop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(3, 6, 14, 0.86);
+  backdrop-filter: blur(6px);
+  z-index: 6;
+}
+
+.shop.hidden {
+  display: none;
+}
+
+.shop__panel {
+  width: min(960px, 96vw);
+  background: linear-gradient(135deg, rgba(20, 30, 55, 0.95), rgba(10, 16, 32, 0.98));
+  border: 1px solid rgba(125, 216, 255, 0.35);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 25px 60px rgba(2, 8, 22, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.shop__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.shop__header h2 {
+  margin: 0 0 6px;
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 1px;
+}
+
+.shop__header p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.shop__credits {
+  background: rgba(12, 20, 36, 0.8);
+  border: 1px solid rgba(255, 179, 71, 0.4);
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-align: right;
+  font-family: "Orbitron", sans-serif;
+}
+
+.shop__credits span {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 179, 71, 0.9);
+}
+
+.shop__credits strong {
+  font-size: 20px;
+  color: var(--gold);
+}
+
+.shop__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.shop__card {
+  background: rgba(9, 15, 30, 0.85);
+  border: 1px solid rgba(125, 216, 255, 0.35);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: inset 0 0 20px rgba(69, 182, 255, 0.08);
+}
+
+.shop__card h3 {
+  margin: 0;
+  font-family: "Orbitron", sans-serif;
+  font-size: 16px;
+}
+
+.shop__card p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.shop__price {
+  font-family: "Orbitron", sans-serif;
+  font-size: 14px;
+  color: var(--gold);
+}
+
+.shop__buy {
+  margin-top: auto;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 216, 255, 0.5);
+  background: linear-gradient(135deg, rgba(20, 40, 80, 0.9), rgba(12, 20, 40, 0.95));
+  color: var(--ink);
+  font-family: "Orbitron", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.shop__buy[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.shop__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#shop-skip {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 216, 255, 0.4);
+  background: rgba(12, 20, 36, 0.9);
+  color: var(--ink);
+  font-family: "Orbitron", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
 }

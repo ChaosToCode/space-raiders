@@ -23,17 +23,56 @@
       <div class="start-card">
         <h1>Space Raiders</h1>
         <p>Arrow keys to move. Space to fire.</p>
+        <div class="enemy-list">
+          <p>Enemies:</p>
+          <p>Invaders: basic attackers.</p>
+          <p>Command Ship: tougher leader, buffs nearby fire rate.</p>
+          <p>Shielder: boosts the closest 5 enemies’ health until destroyed.</p>
+          <p>Bomber: rams the player for heavy damage.</p>
+          <p>Boss: big hull with a laser strike.</p>
+        </div>
         <button id="play" type="button">Play</button>
       </div>
     </div>
+    <div id="shop" class="shop hidden" aria-live="polite">
+      <div class="shop__panel">
+        <div class="shop__header">
+          <div>
+            <h2>Outpost Armory</h2>
+            <p>Choose an upgrade before the next wave.</p>
+          </div>
+          <div class="shop__credits">
+            <span>Credits</span>
+            <strong id="shop-credits">0</strong>
+          </div>
+        </div>
+        <div id="shop-items" class="shop__items"></div>
+        <div class="shop__actions">
+          <button id="shop-skip" type="button">Continue</button>
+        </div>
+      </div>
+    </div>
     <button id="respawn" class="respawn" type="button" hidden>Respawn</button>
-    <canvas id="game" width="960" height="640" aria-label="Space Raiders"></canvas>
+    <canvas id="game" width="960" height="720" aria-label="Space Raiders"></canvas>
+    <div class="controls" aria-label="Touch controls">
+      <div class="controls__move">
+        <button id="btn-up" class="btn" type="button">▲</button>
+        <div class="controls__row">
+          <button id="btn-left" class="btn" type="button">◀</button>
+          <button id="btn-right" class="btn" type="button">▶</button>
+        </div>
+        <button id="btn-down" class="btn" type="button">▼</button>
+      </div>
+      <button id="btn-fire" class="btn btn--fire" type="button">FIRE</button>
+    </div>
     <div class="hint">Arrow keys to move. Space to fire.</div>
     <script src="game.js"></script>
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          navigator.serviceWorker.register("./sw.js");
+          navigator.serviceWorker.register("./sw.js").then((registration) => {
+            registration.update();
+          });
         });
       }
     </script>
