@@ -728,6 +728,35 @@ class Star {
   }
 }
 
+class LayerStar {
+  constructor(config) {
+    this.config = config;
+    this.reset();
+    this.y = rand(0, GAME.height);
+  }
+
+  reset() {
+    this.x = rand(0, GAME.width);
+    this.y = -10;
+    this.size = rand(this.config.sizeMin, this.config.sizeMax);
+    this.speed = rand(this.config.speedMin, this.config.speedMax);
+    this.alpha = rand(this.config.alphaMin, this.config.alphaMax);
+  }
+
+  update(dt) {
+    this.y += this.speed * dt;
+    if (this.y > GAME.height + 10) {
+      this.reset();
+    }
+  }
+
+  draw() {
+    ctx.fillStyle = `rgba(${this.config.color}, ${this.alpha})`;
+    const size = Math.max(1, Math.round(this.size));
+    ctx.fillRect(Math.round(this.x), Math.round(this.y), size, size);
+  }
+}
+
 class StarDust {
   constructor() {
     this.reset();
@@ -752,6 +781,57 @@ class StarDust {
   draw() {
     ctx.fillStyle = `rgba(140, 180, 220, ${this.alpha})`;
     ctx.fillRect(Math.round(this.x), Math.round(this.y), this.size, this.size);
+  }
+}
+
+class GasCloud {
+  constructor() {
+    this.reset(true);
+  }
+
+  reset(initial = false) {
+    this.radius = rand(80, 180);
+    this.x = rand(-this.radius, GAME.width + this.radius);
+    this.y = initial ? rand(-40, GAME.height + 40) : -this.radius - rand(40, 120);
+    this.speed = rand(2, 6);
+    this.hue = rand(180, 320);
+    this.alpha = rand(0.04, 0.1);
+  }
+
+  update(dt) {
+    this.y += this.speed * dt;
+    if (this.y > GAME.height + this.radius + 80) {
+      this.reset(false);
+    }
+  }
+
+  draw() {
+    ctx.save();
+    const blobs = [
+      { ox: -0.25, oy: -0.15, r: 0.75 },
+      { ox: 0.2, oy: -0.05, r: 0.85 },
+      { ox: -0.05, oy: 0.2, r: 0.7 },
+    ];
+    blobs.forEach((blob) => {
+      const radius = this.radius * blob.r;
+      const cx = this.x + this.radius * blob.ox;
+      const cy = this.y + this.radius * blob.oy;
+      const gradient = ctx.createRadialGradient(
+        cx - radius * 0.2,
+        cy - radius * 0.2,
+        radius * 0.2,
+        cx,
+        cy,
+        radius
+      );
+      gradient.addColorStop(0, `hsla(${this.hue}, 70%, 70%, ${this.alpha * 0.9})`);
+      gradient.addColorStop(1, `hsla(${this.hue}, 70%, 45%, 0)`);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.restore();
   }
 }
 
@@ -925,8 +1005,44 @@ class DriftShip {
   }
 }
 
-let stars = Array.from({ length: 120 }, () => new Star());
-let starDust = Array.from({ length: 180 }, () => new StarDust());
+let farStars = Array.from(
+  { length: 70 },
+  () => new LayerStar({
+    speedMin: 4,
+    speedMax: 10,
+    alphaMin: 0.2,
+    alphaMax: 0.45,
+    sizeMin: 1,
+    sizeMax: 2,
+    color: "130, 180, 230",
+  })
+);
+let midStars = Array.from(
+  { length: 110 },
+  () => new LayerStar({
+    speedMin: 10,
+    speedMax: 22,
+    alphaMin: 0.3,
+    alphaMax: 0.7,
+    sizeMin: 1,
+    sizeMax: 2,
+    color: "210, 235, 255",
+  })
+);
+let starDust = Array.from({ length: 140 }, () => new StarDust());
+let gasClouds = Array.from({ length: 3 }, () => new GasCloud());
+let nearStars = Array.from(
+  { length: 40 },
+  () => new LayerStar({
+    speedMin: 18,
+    speedMax: 36,
+    alphaMin: 0.35,
+    alphaMax: 0.85,
+    sizeMin: 1,
+    sizeMax: 3,
+    color: "235, 245, 255",
+  })
+);
 let planets = [];
 let driftShips = [];
 let shootingStars = Array.from({ length: 3 }, () => new ShootingStar());
@@ -1719,8 +1835,11 @@ function checkCollision(a, b) {
 }
 
 function update(dt) {
-  stars.forEach((star) => star.update(dt));
+  farStars.forEach((star) => star.update(dt));
+  midStars.forEach((star) => star.update(dt));
   starDust.forEach((dust) => dust.update(dt));
+  gasClouds.forEach((cloud) => cloud.update(dt));
+  nearStars.forEach((star) => star.update(dt));
   // planets and driftShips removed
   shootingStars.forEach((star) => star.update(dt));
   if (Math.random() < dt * 0.08) {
@@ -2134,8 +2253,11 @@ function update(dt) {
 function drawBackground() {
   ctx.fillStyle = PALETTE.bg;
   ctx.fillRect(0, 0, GAME.width, GAME.height);
-  stars.forEach((star) => star.draw());
+  gasClouds.forEach((cloud) => cloud.draw());
+  farStars.forEach((star) => star.draw());
+  midStars.forEach((star) => star.draw());
   starDust.forEach((dust) => dust.draw());
+  nearStars.forEach((star) => star.draw());
   // planets and driftShips removed
   shootingStars.forEach((star) => star.draw());
 }
