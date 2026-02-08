@@ -878,8 +878,8 @@ class DriftShip {
 
 let stars = Array.from({ length: 120 }, () => new Star());
 let starDust = Array.from({ length: 180 }, () => new StarDust());
-let planets = Array.from({ length: 6 }, () => new MiniPlanet());
-let driftShips = Array.from({ length: 6 }, () => new DriftShip());
+let planets = [];
+let driftShips = [];
 let shootingStars = Array.from({ length: 3 }, () => new ShootingStar());
 let explosions = [];
 let dropShip = null;
@@ -1668,8 +1668,7 @@ function checkCollision(a, b) {
 function update(dt) {
   stars.forEach((star) => star.update(dt));
   starDust.forEach((dust) => dust.update(dt));
-  planets.forEach((planet) => planet.update(dt));
-  driftShips.forEach((ship) => ship.update(dt));
+  // planets and driftShips removed
   shootingStars.forEach((star) => star.update(dt));
   if (Math.random() < dt * 0.08) {
     const inactive = shootingStars.find((star) => !star.active);
@@ -2079,8 +2078,7 @@ function drawBackground() {
   ctx.fillRect(0, 0, GAME.width, GAME.height);
   stars.forEach((star) => star.draw());
   starDust.forEach((dust) => dust.draw());
-  planets.forEach((planet) => planet.draw());
-  driftShips.forEach((ship) => ship.draw());
+  // planets and driftShips removed
   shootingStars.forEach((star) => star.draw());
 }
 
