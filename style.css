@@ -46,7 +46,7 @@ canvas {
   box-shadow: 0 30px 60px rgba(2, 6, 20, 0.65), 0 0 30px rgba(69, 182, 255, 0.15);
   width: min(960px, 96vw);
   height: auto;
-  max-height: 70vh;
+  max-height: 82vh;
   display: block;
   border-radius: 14px;
   image-rendering: pixelated;

@@ -138,6 +138,9 @@ let nameEntryActive = false;
 let nameEntry = "";
 let nameEntryScore = 0;
 let nameEntryDone = false;
+let editEntryActive = false;
+let editEntryIndex = 0;
+let editEntryBuffer = "";
 
 const rand = (min, max) => Math.random() * (max - min) + min;
 
@@ -217,6 +220,21 @@ function submitHighScore() {
   saveHighScores(highScores);
   nameEntryActive = false;
   nameEntryDone = true;
+}
+
+function beginEditHighScores() {
+  if (!highScores.length) return;
+  editEntryActive = true;
+  editEntryIndex = 0;
+  editEntryBuffer = highScores[0].name || "";
+}
+
+function saveEditedHighScore() {
+  if (!editEntryActive || !highScores.length) return;
+  const trimmedName = editEntryBuffer.padEnd(3, "_").slice(0, 3).toUpperCase();
+  highScores[editEntryIndex].name = trimmedName;
+  saveHighScores(highScores);
+  editEntryActive = false;
 }
 
 function resetCheatLevelCapture() {
@@ -1590,6 +1608,9 @@ function resetGame(consumeCredit = true, dropIn = false) {
   nameEntry = "";
   nameEntryScore = 0;
   nameEntryDone = false;
+  editEntryActive = false;
+  editEntryIndex = 0;
+  editEntryBuffer = "";
   playerUpgrades = {
     rapid: 0,
     damage: 0,
@@ -1672,6 +1693,7 @@ function spawnMedkit() {
     x,
     y,
     size: 18,
+    hitRadius: 26,
     pulse: rand(0, Math.PI * 2),
   };
 }
@@ -2022,7 +2044,8 @@ function update(dt) {
         const closestY = Math.max(player.y, Math.min(medkit.y, player.y + player.height));
         const dx = medkit.x - closestX;
         const dy = medkit.y - closestY;
-        if (dx * dx + dy * dy <= (medkit.size / 2) * (medkit.size / 2)) {
+        const hitRadius = medkit.hitRadius ?? medkit.size / 2;
+        if (dx * dx + dy * dy <= hitRadius * hitRadius) {
           player.health = Math.min(getPlayerMaxHealth(), player.health + getMedkitHeal());
           medkit = null;
         }
@@ -2355,7 +2378,8 @@ function draw() {
     const listStartY = highScoreStartY + 18;
     const scoresToShow = highScores.length ? highScores : [{ name: "---", score: 0 }];
     scoresToShow.forEach((entry, index) => {
-      const line = `${index + 1}. ${entry.name}  ${entry.score}`;
+      const prefix = editEntryActive && index === editEntryIndex ? ">" : `${index + 1}.`;
+      const line = `${prefix} ${entry.name}  ${entry.score}`;
       ctx.fillText(line, GAME.width / 2, listStartY + index * 18);
     });
 
@@ -2365,6 +2389,18 @@ function draw() {
       ctx.fillText("ENTER INITIALS", GAME.width / 2, entryY);
       ctx.font = "18px 'Courier New', monospace";
       const displayName = nameEntry.padEnd(3, "_");
+      ctx.fillText(displayName, GAME.width / 2, entryY + 24);
+    } else if (!editEntryActive && highScores.length) {
+      ctx.font = "12px 'Courier New', monospace";
+      ctx.fillText("Press E to edit initials", GAME.width / 2, listStartY + scoresToShow.length * 18 + 18);
+    }
+
+    if (editEntryActive) {
+      const entryY = listStartY + scoresToShow.length * 18 + 24;
+      ctx.font = "16px 'Courier New', monospace";
+      ctx.fillText("EDIT INITIALS", GAME.width / 2, entryY);
+      ctx.font = "18px 'Courier New', monospace";
+      const displayName = editEntryBuffer.padEnd(3, "_");
       ctx.fillText(displayName, GAME.width / 2, entryY + 24);
     }
   }
@@ -2382,6 +2418,26 @@ function loop(timestamp) {
 
 window.addEventListener("keydown", (event) => {
   ensureAudio();
+  if (editEntryActive) {
+    if (event.code === "ArrowUp") {
+      event.preventDefault();
+      editEntryIndex = (editEntryIndex - 1 + highScores.length) % highScores.length;
+      editEntryBuffer = highScores[editEntryIndex].name || "";
+    } else if (event.code === "ArrowDown") {
+      event.preventDefault();
+      editEntryIndex = (editEntryIndex + 1) % highScores.length;
+      editEntryBuffer = highScores[editEntryIndex].name || "";
+    } else if (/^[a-zA-Z]$/.test(event.key) && editEntryBuffer.length < 3) {
+      editEntryBuffer += event.key.toUpperCase();
+    } else if (event.key === "Backspace") {
+      editEntryBuffer = editEntryBuffer.slice(0, -1);
+    } else if (event.key === "Enter") {
+      saveEditedHighScore();
+    } else if (event.key === "Escape") {
+      editEntryActive = false;
+    }
+    return;
+  }
   if (nameEntryActive) {
     if (/^[a-zA-Z]$/.test(event.key) && nameEntry.length < 3) {
       nameEntry += event.key.toUpperCase();
@@ -2394,6 +2450,10 @@ window.addEventListener("keydown", (event) => {
     } else if (event.key === "Enter" && nameEntry.length > 0) {
       submitHighScore();
     }
+    return;
+  }
+  if (gameOver && gameOverTimer <= 0 && event.code === "KeyE") {
+    beginEditHighScores();
     return;
   }
   if (cheatAwaitLevel) {
@@ -2427,19 +2487,49 @@ window.addEventListener("keydown", (event) => {
   if (event.code === "KeyO" && !gameOver) {
     openShop();
   }
-  if (event.code === "ArrowLeft") input.left = true;
-  if (event.code === "ArrowRight") input.right = true;
-  if (event.code === "ArrowUp") input.up = true;
-  if (event.code === "ArrowDown") input.down = true;
-  if (event.code === "Space") input.fire = true;
+  if (event.code === "ArrowLeft") {
+    event.preventDefault();
+    input.left = true;
+  }
+  if (event.code === "ArrowRight") {
+    event.preventDefault();
+    input.right = true;
+  }
+  if (event.code === "ArrowUp") {
+    event.preventDefault();
+    input.up = true;
+  }
+  if (event.code === "ArrowDown") {
+    event.preventDefault();
+    input.down = true;
+  }
+  if (event.code === "Space") {
+    event.preventDefault();
+    input.fire = true;
+  }
 });
 
 window.addEventListener("keyup", (event) => {
-  if (event.code === "ArrowLeft") input.left = false;
-  if (event.code === "ArrowRight") input.right = false;
-  if (event.code === "ArrowUp") input.up = false;
-  if (event.code === "ArrowDown") input.down = false;
-  if (event.code === "Space") input.fire = false;
+  if (event.code === "ArrowLeft") {
+    event.preventDefault();
+    input.left = false;
+  }
+  if (event.code === "ArrowRight") {
+    event.preventDefault();
+    input.right = false;
+  }
+  if (event.code === "ArrowUp") {
+    event.preventDefault();
+    input.up = false;
+  }
+  if (event.code === "ArrowDown") {
+    event.preventDefault();
+    input.down = false;
+  }
+  if (event.code === "Space") {
+    event.preventDefault();
+    input.fire = false;
+  }
 });
 
 function bindTouchButton(button, key) {
