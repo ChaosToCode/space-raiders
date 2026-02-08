@@ -1,9 +1,5 @@
-const CACHE_NAME = "space-raiders-dev";
+const CACHE_NAME = "space-raiders-static-v2";
 const ASSETS = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./game.js",
   "./manifest.json",
   "./icon-192.svg",
   "./icon-512.svg",
@@ -29,21 +25,13 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-  const isAsset =
+  const isCoreAsset =
     request.destination === "script" ||
     request.destination === "style" ||
     request.destination === "document";
 
-  if (isAsset) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+  if (isCoreAsset) {
+    event.respondWith(fetch(request, { cache: "no-store" }));
     return;
   }
 
