@@ -89,6 +89,7 @@ const bulletSpeedBase = GAME.height / GAME.bulletTravelSeconds;
 const LEVELS = Array.from({ length: GAME.maxLevels }, (_, index) => {
   const level = index + 1;
   const cappedSpeedLevel = Math.min(level, 50);
+  const speedScale = 0.95;
   const extraLevels = Math.max(0, level - 50);
   const healthMultiplier = 1 + extraLevels * 0.02;
   const damageMultiplier = 1 + extraLevels * 0.01;
@@ -96,8 +97,8 @@ const LEVELS = Array.from({ length: GAME.maxLevels }, (_, index) => {
     level,
     columns: 7,
     rows: 2,
-    enemySpeed: 18 + cappedSpeedLevel * 6,
-    bulletSpeed: bulletSpeedBase + cappedSpeedLevel * 20,
+    enemySpeed: 18 + cappedSpeedLevel * 6 * speedScale,
+    bulletSpeed: bulletSpeedBase + cappedSpeedLevel * 20 * speedScale,
     fireChance: 0.25 + cappedSpeedLevel * 0.05,
     healthMultiplier,
     damageMultiplier,
@@ -129,6 +130,14 @@ let cheatInfiniteFire = false;
 let cheatAwaitLevel = false;
 let cheatLevelBuffer = "";
 let cheatLevelTimer = null;
+
+const HIGH_SCORES_KEY = "space-raiders-high-scores";
+const HIGH_SCORE_LIMIT = 5;
+let highScores = [];
+let nameEntryActive = false;
+let nameEntry = "";
+let nameEntryScore = 0;
+let nameEntryDone = false;
 
 const rand = (min, max) => Math.random() * (max - min) + min;
 
@@ -172,6 +181,44 @@ function playSound({
   osc.stop(audioContext.currentTime + duration);
 }
 
+function loadHighScores() {
+  try {
+    const stored = localStorage.getItem(HIGH_SCORES_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((entry) => entry && typeof entry.name === "string" && Number.isFinite(entry.score))
+      .slice(0, HIGH_SCORE_LIMIT);
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveHighScores(scores) {
+  try {
+    localStorage.setItem(HIGH_SCORES_KEY, JSON.stringify(scores));
+  } catch (error) {
+    // ignore storage errors
+  }
+}
+
+function isHighScore(score) {
+  if (highScores.length < HIGH_SCORE_LIMIT) return true;
+  const lowest = highScores[highScores.length - 1];
+  return score > lowest.score;
+}
+
+function submitHighScore() {
+  const trimmedName = nameEntry.padEnd(3, "_").slice(0, 3).toUpperCase();
+  highScores.push({ name: trimmedName, score: nameEntryScore });
+  highScores.sort((a, b) => b.score - a.score);
+  highScores = highScores.slice(0, HIGH_SCORE_LIMIT);
+  saveHighScores(highScores);
+  nameEntryActive = false;
+  nameEntryDone = true;
+}
+
 function resetCheatLevelCapture() {
   cheatAwaitLevel = false;
   cheatLevelBuffer = "";
@@ -180,6 +227,8 @@ function resetCheatLevelCapture() {
     cheatLevelTimer = null;
   }
 }
+
+highScores = loadHighScores();
 
 function scheduleCheatLevelJump() {
   if (!cheatLevelBuffer) return;
@@ -1421,6 +1470,10 @@ function resetGame(consumeCredit = true, dropIn = false) {
     if (credits <= 0) return;
     credits -= 1;
   }
+  nameEntryActive = false;
+  nameEntry = "";
+  nameEntryScore = 0;
+  nameEntryDone = false;
   playerUpgrades = {
     rapid: 0,
     damage: 0,
@@ -2041,6 +2094,11 @@ function update(dt) {
     gameOver = true;
     gameOverTimer = 3;
     respawnButton.hidden = true;
+    if (!nameEntryDone && !nameEntryActive && isHighScore(score)) {
+      nameEntryActive = true;
+      nameEntryScore = score;
+      nameEntry = "";
+    }
     if (!deathProcessed) {
       credits = Math.max(0, credits - 1);
       deathProcessed = true;
@@ -2167,6 +2225,26 @@ function draw() {
     ctx.font = "14px 'Courier New', monospace";
     ctx.fillText("Arrow keys to move", GAME.width / 2, GAME.height / 2 + 48);
     ctx.fillText("Space to shoot", GAME.width / 2, GAME.height / 2 + 68);
+
+    const highScoreStartY = GAME.height / 2 + 110;
+    ctx.font = "16px 'Courier New', monospace";
+    ctx.fillText("HIGH SCORES", GAME.width / 2, highScoreStartY);
+    ctx.font = "14px 'Courier New', monospace";
+    const listStartY = highScoreStartY + 18;
+    const scoresToShow = highScores.length ? highScores : [{ name: "---", score: 0 }];
+    scoresToShow.forEach((entry, index) => {
+      const line = `${index + 1}. ${entry.name}  ${entry.score}`;
+      ctx.fillText(line, GAME.width / 2, listStartY + index * 18);
+    });
+
+    if (nameEntryActive) {
+      const entryY = listStartY + scoresToShow.length * 18 + 24;
+      ctx.font = "16px 'Courier New', monospace";
+      ctx.fillText("ENTER INITIALS", GAME.width / 2, entryY);
+      ctx.font = "18px 'Courier New', monospace";
+      const displayName = nameEntry.padEnd(3, "_");
+      ctx.fillText(displayName, GAME.width / 2, entryY + 24);
+    }
   }
 }
 
@@ -2182,6 +2260,20 @@ function loop(timestamp) {
 
 window.addEventListener("keydown", (event) => {
   ensureAudio();
+  if (nameEntryActive) {
+    if (/^[a-zA-Z]$/.test(event.key) && nameEntry.length < 3) {
+      nameEntry += event.key.toUpperCase();
+      playSound({ type: "square", frequency: 500, endFrequency: 420, duration: 0.08, gain: 0.04 });
+      if (nameEntry.length === 3) {
+        submitHighScore();
+      }
+    } else if (event.key === "Backspace") {
+      nameEntry = nameEntry.slice(0, -1);
+    } else if (event.key === "Enter" && nameEntry.length > 0) {
+      submitHighScore();
+    }
+    return;
+  }
   if (cheatAwaitLevel) {
     if (/^\d$/.test(event.key)) {
       const maxDigits = String(GAME.maxLevels).length;
@@ -2253,7 +2345,6 @@ bindTouchButton(btnDown, "down");
 bindTouchButton(btnFire, "fire");
 
 window.openShop = openShop;
-
 resetGame(false, false);
 requestAnimationFrame(loop);
 
