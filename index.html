@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self';" />
     <meta name="referrer" content="no-referrer" />
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
     <title>Space Raiders</title>
@@ -74,17 +74,6 @@
     <div class="hint">Arrow keys to move. Space to fire.</div>
     <div class="hint" style="opacity:0.7;font-size:12px;">Build 2026-02-08-5</div>
     <script src="game.js?v=2026-02-08-5"></script>
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.getRegistrations().then((regs) => {
-            regs.forEach((reg) => reg.unregister());
-          });
-          if ("caches" in window) {
-            caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
-          }
-        });
-      }
-    </script>
+    <script src="init.js?v=2026-02-09-1"></script>
   </body>
 </html>

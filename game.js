@@ -619,15 +619,30 @@ class Invader {
     const legPhase = Math.floor(performance.now() / 160) % 2;
     const legSwing = invaderDirection * (legPhase === 0 ? -2 : 2);
 
-    // Classic invader-style blocks
+    const healthRatio = Math.max(0, this.health) / this.maxHealth;
+    const damageStage = Math.min(4, Math.floor((1 - healthRatio) * 3));
+    const showLegs = damageStage < 1;
+    const showArms = damageStage < 2;
+    const showTop = damageStage < 3;
+    const showMid = damageStage < 4;
+
+    // Classic invader-style blocks (chip away as health drops)
     ctx.fillStyle = color;
-    ctx.fillRect(drawX + u * 1, drawY + 0, u * 6, v * 1);
-    ctx.fillRect(drawX + 0, drawY + v * 1, u * 2, v * 2);
+    if (showTop) {
+      ctx.fillRect(drawX + u * 1, drawY + 0, u * 6, v * 1);
+    }
+    if (showArms) {
+      ctx.fillRect(drawX + 0, drawY + v * 1, u * 2, v * 2);
+      ctx.fillRect(drawX + u * 6, drawY + v * 1, u * 2, v * 2);
+    }
     ctx.fillRect(drawX + u * 2, drawY + v * 1, u * 4, v * 2);
-    ctx.fillRect(drawX + u * 6, drawY + v * 1, u * 2, v * 2);
-    ctx.fillRect(drawX + u * 1, drawY + v * 3, u * 6, v * 1);
-    ctx.fillRect(drawX + u * 2 + legSwing, drawY + v * 4, u * 1, v * 2);
-    ctx.fillRect(drawX + u * 5 + legSwing, drawY + v * 4, u * 1, v * 2);
+    if (showMid) {
+      ctx.fillRect(drawX + u * 1, drawY + v * 3, u * 6, v * 1);
+    }
+    if (showLegs) {
+      ctx.fillRect(drawX + u * 2 + legSwing, drawY + v * 4, u * 1, v * 2);
+      ctx.fillRect(drawX + u * 5 + legSwing, drawY + v * 4, u * 1, v * 2);
+    }
 
     // Eyes
     ctx.fillStyle = dark;
@@ -671,15 +686,7 @@ class Invader {
       ctx.strokeRect(x + u * 1, y + v * 0.6, u * 6, v * 4.2);
     }
 
-    const barWidth = this.width;
-    const barHeight = 4;
-    const barX = this.x;
-    const barY = this.y - 8;
-    const healthRatio = Math.max(0, this.health) / this.maxHealth;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-    ctx.fillRect(barX, barY, barWidth, barHeight);
-    ctx.fillStyle = "#ff4d4d";
-    ctx.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+    // Health bar removed per request
   }
 }
 
