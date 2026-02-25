@@ -12,7 +12,7 @@
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
     <title>Space Raiders</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=2026-02-08-5" />
+    <link rel="stylesheet" href="style.css?v=2026-02-25-1" />
   </head>
   <body>
     <div class="hud">
@@ -28,7 +28,7 @@
     <div id="start-screen" class="start-screen">
       <div class="start-card">
         <h1>Space Raiders</h1>
-        <p>Arrow keys to move. Space to fire.</p>
+        <p>Arrow keys on desktop. Thumb pad on phone. Space/FIRE to shoot.</p>
         <div class="enemy-list">
           <p>Enemies:</p>
           <p>Invaders: basic attackers.</p>
@@ -62,18 +62,16 @@
     <canvas id="game" width="960" height="860" aria-label="Space Raiders"></canvas>
     <div class="controls" aria-label="Touch controls">
       <div class="controls__move">
-        <button id="btn-up" class="btn" type="button">▲</button>
-        <div class="controls__row">
-          <button id="btn-left" class="btn" type="button">◀</button>
-          <button id="btn-right" class="btn" type="button">▶</button>
+        <div id="thumb-pad" class="thumbpad" role="application" aria-label="Movement thumb pad">
+          <div id="thumb-knob" class="thumbpad__knob"></div>
         </div>
-        <button id="btn-down" class="btn" type="button">▼</button>
+        <span class="controls__label">Move</span>
       </div>
       <button id="btn-fire" class="btn btn--fire" type="button">FIRE</button>
     </div>
-    <div class="hint">Arrow keys to move. Space to fire.</div>
-    <div class="hint" style="opacity:0.7;font-size:12px;">Build 2026-02-08-5</div>
-    <script src="game.js?v=2026-02-08-5"></script>
+    <div class="hint">Desktop: Arrow keys. Phone: thumb pad. Shoot: Space or FIRE.</div>
+    <div class="hint" style="opacity:0.7;font-size:12px;">Build 2026-02-24-4</div>
+    <script src="game.js?v=2026-02-25-1"></script>
     <script src="init.js?v=2026-02-09-1"></script>
   </body>
 </html>

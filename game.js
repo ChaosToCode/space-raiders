@@ -13,10 +13,8 @@ const shopOverlay = document.getElementById("shop");
 const shopCredits = document.getElementById("shop-credits");
 const shopItemsContainer = document.getElementById("shop-items");
 const shopSkipButton = document.getElementById("shop-skip");
-const btnLeft = document.getElementById("btn-left");
-const btnRight = document.getElementById("btn-right");
-const btnUp = document.getElementById("btn-up");
-const btnDown = document.getElementById("btn-down");
+const thumbPad = document.getElementById("thumb-pad");
+const thumbKnob = document.getElementById("thumb-knob");
 const btnFire = document.getElementById("btn-fire");
 
 const GAME = {
@@ -43,6 +41,8 @@ const GAME = {
   bossLaserDamage: 50,
   leaderBombDamage: 75,
 };
+
+const POWERUP_SPAWN_X_MARGIN = 36;
 
 const PALETTE = {
   bg: "#000",
@@ -122,6 +122,45 @@ const input = {
   down: false,
   fire: false,
 };
+
+const keyboardInput = {
+  left: false,
+  right: false,
+  up: false,
+  down: false,
+  fire: false,
+};
+
+const touchInput = {
+  left: false,
+  right: false,
+  up: false,
+  down: false,
+  fire: false,
+};
+
+const SCROLL_BLOCKED_KEYS = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "Space",
+]);
+
+function blockPageScrollKeys(event) {
+  if (!event.cancelable) return;
+  if (SCROLL_BLOCKED_KEYS.has(event.code)) {
+    event.preventDefault();
+  }
+}
+
+function syncInputState() {
+  input.left = keyboardInput.left || touchInput.left;
+  input.right = keyboardInput.right || touchInput.right;
+  input.up = keyboardInput.up || touchInput.up;
+  input.down = keyboardInput.down || touchInput.down;
+  input.fire = keyboardInput.fire || touchInput.fire;
+}
 
 const CHEAT_CODE = "CHEAT";
 const CHEAT_LEVEL_DELAY = 700;
@@ -726,33 +765,6 @@ class Bomber {
   }
 }
 
-class Star {
-  constructor() {
-    this.reset();
-    this.y = rand(0, GAME.height);
-  }
-
-  reset() {
-    this.x = rand(0, GAME.width);
-    this.y = -10;
-    this.radius = rand(0.6, 1.8);
-    this.speed = rand(12, 40);
-    this.alpha = rand(0.4, 1);
-  }
-
-  update(dt) {
-    this.y += this.speed * dt;
-    if (this.y > GAME.height + 10) {
-      this.reset();
-    }
-  }
-
-  draw() {
-    ctx.fillStyle = `rgba(210, 235, 255, ${this.alpha})`;
-    ctx.fillRect(Math.round(this.x), Math.round(this.y), 2, 2);
-  }
-}
-
 class LayerStar {
   constructor(config) {
     this.config = config;
@@ -860,39 +872,6 @@ class GasCloud {
   }
 }
 
-class MiniPlanet {
-  constructor() {
-    this.reset(true);
-  }
-
-  reset(initial = false) {
-    this.radius = rand(6, 16);
-    this.x = rand(this.radius, GAME.width - this.radius);
-    this.y = initial ? rand(30, GAME.height - 120) : -this.radius - rand(20, 80);
-    this.speed = rand(3, 8);
-    this.hue = rand(0, 360);
-    this.sat = rand(35, 65);
-    this.light = rand(50, 70);
-    this.alpha = 0.75;
-  }
-
-  update(dt) {
-    this.y += this.speed * dt;
-    if (this.y > GAME.height + this.radius + 60) {
-      this.reset(false);
-    }
-  }
-
-  draw() {
-    ctx.save();
-    ctx.globalAlpha = this.alpha;
-    ctx.fillStyle = `hsl(${this.hue}, ${this.sat}%, ${this.light}%)`;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-}
 class ShootingStar {
   constructor() {
     this.reset(true);
@@ -938,98 +917,6 @@ class ShootingStar {
   }
 }
 
-class Planet {
-  constructor() {
-    this.reset(true);
-  }
-
-  reset(initial = false) {
-    this.radius = rand(20, 60);
-    this.x = rand(this.radius, GAME.width - this.radius);
-    this.y = initial ? rand(40, GAME.height - 160) : -this.radius - rand(20, 80);
-    this.speed = rand(4, 12);
-    this.hue = rand(180, 320);
-    this.alpha = rand(0.75, 0.95);
-    this.ring = Math.random() < 0.35;
-  }
-
-  update(dt) {
-    this.y += this.speed * dt;
-    if (this.y > GAME.height + this.radius + 80) {
-      this.reset(false);
-    }
-  }
-
-  draw() {
-    ctx.save();
-    ctx.globalAlpha = this.alpha;
-    const gradient = ctx.createRadialGradient(
-      this.x - this.radius * 0.3,
-      this.y - this.radius * 0.3,
-      this.radius * 0.2,
-      this.x,
-      this.y,
-      this.radius
-    );
-    gradient.addColorStop(0, `hsl(${this.hue}, 45%, 65%)`);
-    gradient.addColorStop(0.7, `hsl(${this.hue}, 35%, 48%)`);
-    gradient.addColorStop(1, `hsl(${this.hue}, 30%, 35%)`);
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = `rgba(255, 255, 255, 0.12)`;
-    ctx.beginPath();
-    ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.45, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (this.ring) {
-      ctx.strokeStyle = `rgba(180, 220, 255, 0.35)`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(this.x, this.y, this.radius * 1.4, this.radius * 0.5, -0.4, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-}
-
-class DriftShip {
-  constructor() {
-    this.reset(true);
-  }
-
-  reset(initial = false) {
-    this.width = rand(18, 36);
-    this.height = rand(10, 18);
-    this.x = rand(-40, GAME.width + 40);
-    this.y = initial ? rand(40, GAME.height - 80) : -this.height - rand(20, 80);
-    this.speed = rand(8, 18);
-    this.alpha = rand(0.15, 0.3);
-  }
-
-  update(dt) {
-    this.y += this.speed * dt;
-    if (this.y > GAME.height + 60) {
-      this.reset(false);
-    }
-  }
-
-  draw() {
-    const x = Math.round(this.x);
-    const y = Math.round(this.y);
-    ctx.save();
-    ctx.globalAlpha = this.alpha;
-    ctx.fillStyle = "#f5f7ff";
-    ctx.fillRect(x + 2, y + 2, this.width - 4, this.height - 4);
-    ctx.fillRect(x, y + this.height - 4, this.width, 3);
-    ctx.fillStyle = "#c9d2e5";
-    ctx.fillRect(x + this.width * 0.35, y, this.width * 0.3, 2);
-    ctx.restore();
-  }
-}
-
 let farStars = Array.from(
   { length: 70 },
   () => new LayerStar({
@@ -1068,8 +955,6 @@ let nearStars = Array.from(
     color: "235, 245, 255",
   })
 );
-let planets = [];
-let driftShips = [];
 let shootingStars = Array.from({ length: 3 }, () => new ShootingStar());
 let explosions = [];
 let dropShip = null;
@@ -1679,7 +1564,10 @@ function resetGame(consumeCredit = true, dropIn = false) {
 function spawnShield() {
   const offsetX = rand(-120, 120);
   const offsetY = rand(-120, -40);
-  const x = Math.max(20, Math.min(GAME.width - 20, player.x + player.width / 2 + offsetX));
+  const x = Math.max(
+    POWERUP_SPAWN_X_MARGIN,
+    Math.min(GAME.width - POWERUP_SPAWN_X_MARGIN, player.x + player.width / 2 + offsetX)
+  );
   const minY = GAME.height / 2;
   const y = Math.max(minY, Math.min(GAME.height - 120, player.y + offsetY));
   shield = {
@@ -1693,7 +1581,10 @@ function spawnShield() {
 function spawnMedkit() {
   const offsetX = rand(-140, 140);
   const offsetY = rand(-140, -60);
-  const x = Math.max(20, Math.min(GAME.width - 20, player.x + player.width / 2 + offsetX));
+  const x = Math.max(
+    POWERUP_SPAWN_X_MARGIN,
+    Math.min(GAME.width - POWERUP_SPAWN_X_MARGIN, player.x + player.width / 2 + offsetX)
+  );
   const minY = GAME.height / 2;
   const y = Math.max(minY, Math.min(GAME.height - 140, player.y + offsetY));
   medkit = {
@@ -1708,7 +1599,10 @@ function spawnMedkit() {
 function spawnPowerUp() {
   const offsetX = rand(-160, 160);
   const offsetY = rand(-160, -70);
-  const x = Math.max(20, Math.min(GAME.width - 20, player.x + player.width / 2 + offsetX));
+  const x = Math.max(
+    POWERUP_SPAWN_X_MARGIN,
+    Math.min(GAME.width - POWERUP_SPAWN_X_MARGIN, player.x + player.width / 2 + offsetX)
+  );
   const minY = GAME.height / 2;
   const y = Math.max(minY, Math.min(GAME.height - 160, player.y + offsetY));
   powerUp = {
@@ -1869,7 +1763,6 @@ function update(dt) {
   starDust.forEach((dust) => dust.update(dt));
   gasClouds.forEach((cloud) => cloud.update(dt));
   nearStars.forEach((star) => star.update(dt));
-  // planets and driftShips removed
   shootingStars.forEach((star) => star.update(dt));
   if (Math.random() < dt * 0.08) {
     const inactive = shootingStars.find((star) => !star.active);
@@ -2288,7 +2181,6 @@ function drawBackground() {
   midStars.forEach((star) => star.draw());
   starDust.forEach((dust) => dust.draw());
   nearStars.forEach((star) => star.draw());
-  // planets and driftShips removed
   shootingStars.forEach((star) => star.draw());
 }
 
@@ -2423,6 +2315,9 @@ function loop(timestamp) {
   requestAnimationFrame(loop);
 }
 
+window.addEventListener("keydown", blockPageScrollKeys, { capture: true });
+window.addEventListener("keyup", blockPageScrollKeys, { capture: true });
+
 window.addEventListener("keydown", (event) => {
   ensureAudio();
   if (editEntryActive) {
@@ -2496,46 +2391,56 @@ window.addEventListener("keydown", (event) => {
   }
   if (event.code === "ArrowLeft") {
     event.preventDefault();
-    input.left = true;
+    keyboardInput.left = true;
+    syncInputState();
   }
   if (event.code === "ArrowRight") {
     event.preventDefault();
-    input.right = true;
+    keyboardInput.right = true;
+    syncInputState();
   }
   if (event.code === "ArrowUp") {
     event.preventDefault();
-    input.up = true;
+    keyboardInput.up = true;
+    syncInputState();
   }
   if (event.code === "ArrowDown") {
     event.preventDefault();
-    input.down = true;
+    keyboardInput.down = true;
+    syncInputState();
   }
   if (event.code === "Space") {
     event.preventDefault();
-    input.fire = true;
+    keyboardInput.fire = true;
+    syncInputState();
   }
 });
 
 window.addEventListener("keyup", (event) => {
   if (event.code === "ArrowLeft") {
     event.preventDefault();
-    input.left = false;
+    keyboardInput.left = false;
+    syncInputState();
   }
   if (event.code === "ArrowRight") {
     event.preventDefault();
-    input.right = false;
+    keyboardInput.right = false;
+    syncInputState();
   }
   if (event.code === "ArrowUp") {
     event.preventDefault();
-    input.up = false;
+    keyboardInput.up = false;
+    syncInputState();
   }
   if (event.code === "ArrowDown") {
     event.preventDefault();
-    input.down = false;
+    keyboardInput.down = false;
+    syncInputState();
   }
   if (event.code === "Space") {
     event.preventDefault();
-    input.fire = false;
+    keyboardInput.fire = false;
+    syncInputState();
   }
 });
 
@@ -2543,7 +2448,8 @@ function bindTouchButton(button, key) {
   if (!button) return;
   const setState = (value) => {
     ensureAudio();
-    input[key] = value;
+    touchInput[key] = value;
+    syncInputState();
   };
   button.addEventListener("pointerdown", (event) => {
     event.preventDefault();
@@ -2557,11 +2463,93 @@ function bindTouchButton(button, key) {
   button.addEventListener("pointercancel", () => setState(false));
 }
 
-bindTouchButton(btnLeft, "left");
-bindTouchButton(btnRight, "right");
-bindTouchButton(btnUp, "up");
-bindTouchButton(btnDown, "down");
 bindTouchButton(btnFire, "fire");
+
+const THUMB_DEAD_ZONE = 0.22;
+let thumbPointerId = null;
+
+function setThumbDirection(left, right, up, down) {
+  touchInput.left = left;
+  touchInput.right = right;
+  touchInput.up = up;
+  touchInput.down = down;
+  syncInputState();
+}
+
+function resetThumbPad() {
+  thumbPointerId = null;
+  setThumbDirection(false, false, false, false);
+  if (thumbKnob) {
+    thumbKnob.style.transform = "translate(-50%, -50%)";
+  }
+}
+
+function updateThumbPadFromPointer(event) {
+  if (!thumbPad || !thumbKnob) return;
+  const rect = thumbPad.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const dx = event.clientX - centerX;
+  const dy = event.clientY - centerY;
+  const maxDistance = Math.min(rect.width, rect.height) * 0.34;
+  const distance = Math.hypot(dx, dy);
+  const clampedDistance = Math.min(distance, maxDistance);
+  const angle = Math.atan2(dy, dx);
+  const knobX = Math.cos(angle) * clampedDistance;
+  const knobY = Math.sin(angle) * clampedDistance;
+
+  thumbKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+
+  const normalizedX = knobX / maxDistance;
+  const normalizedY = knobY / maxDistance;
+  const horizontalActive = Math.abs(normalizedX) > THUMB_DEAD_ZONE;
+  const verticalActive = Math.abs(normalizedY) > THUMB_DEAD_ZONE;
+  setThumbDirection(
+    horizontalActive && normalizedX < 0,
+    horizontalActive && normalizedX > 0,
+    verticalActive && normalizedY < 0,
+    verticalActive && normalizedY > 0
+  );
+}
+
+if (thumbPad) {
+  thumbPad.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    ensureAudio();
+    thumbPointerId = event.pointerId;
+    thumbPad.setPointerCapture(event.pointerId);
+    updateThumbPadFromPointer(event);
+  });
+
+  thumbPad.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== thumbPointerId) return;
+    event.preventDefault();
+    updateThumbPadFromPointer(event);
+  });
+
+  const endThumbControl = (event) => {
+    if (event.pointerId !== thumbPointerId) return;
+    event.preventDefault();
+    if (thumbPad.hasPointerCapture(event.pointerId)) {
+      thumbPad.releasePointerCapture(event.pointerId);
+    }
+    resetThumbPad();
+  };
+
+  thumbPad.addEventListener("pointerup", endThumbControl);
+  thumbPad.addEventListener("pointercancel", endThumbControl);
+}
+
+window.addEventListener("blur", () => {
+  keyboardInput.left = false;
+  keyboardInput.right = false;
+  keyboardInput.up = false;
+  keyboardInput.down = false;
+  keyboardInput.fire = false;
+  touchInput.fire = false;
+  resetThumbPad();
+  syncInputState();
+});
 
 window.openShop = openShop;
 resetGame(false, false);
